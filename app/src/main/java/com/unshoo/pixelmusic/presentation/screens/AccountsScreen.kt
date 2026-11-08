@@ -81,6 +81,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.unshoo.pixelmusic.R
 import com.unshoo.pixelmusic.presentation.components.CollapsibleCommonTopBar
 import com.unshoo.pixelmusic.presentation.components.MiniPlayerHeight
+import com.unshoo.pixelmusic.presentation.navidrome.auth.NavidromeLoginActivity
 import com.unshoo.pixelmusic.presentation.telegram.auth.TelegramLoginActivity
 import com.unshoo.pixelmusic.presentation.viewmodel.AccountsViewModel
 import com.unshoo.pixelmusic.presentation.viewmodel.ExternalAccountUiModel
@@ -242,9 +243,11 @@ fun AccountsScreen(
                             )
                         },
                         onLogout = { viewModel.logout(account.service) },
-                        painter = if (account.service == ExternalServiceAccount.TELEGRAM) {
-                            painterResource(R.drawable.telegram)
-                        } else null
+                        painter = when (account.service) {
+                            ExternalServiceAccount.TELEGRAM -> painterResource(R.drawable.telegram)
+                            ExternalServiceAccount.NAVIDROME -> painterResource(R.drawable.ic_navidrome)
+                            else -> null
+                        }
                     )
                 }
             }
@@ -577,6 +580,7 @@ private fun EmptyAccountsCard(
                 val painter = when (service) {
                     ExternalServiceAccount.TELEGRAM -> painterResource(R.drawable.telegram)
                     ExternalServiceAccount.GOOGLE_DRIVE -> painterResource(R.drawable.rounded_drive_export_24)
+                    ExternalServiceAccount.NAVIDROME -> painterResource(R.drawable.ic_navidrome)
                     ExternalServiceAccount.YOUTUBE -> null
                     ExternalServiceAccount.LASTFM -> null
                 }
@@ -645,6 +649,14 @@ private fun servicePalette(service: ExternalServiceAccount): ServicePalette {
             primaryActionContainer = MaterialTheme.colorScheme.secondaryContainer,
             primaryActionTint = MaterialTheme.colorScheme.onSecondaryContainer
         )
+        ExternalServiceAccount.NAVIDROME -> ServicePalette(
+            iconContainer = MaterialTheme.colorScheme.tertiaryContainer,
+            iconTint = MaterialTheme.colorScheme.onTertiaryContainer,
+            statusContainer = Color(0xFFD6E3FF),
+            statusTint = Color(0xFF0B3D91),
+            primaryActionContainer = MaterialTheme.colorScheme.tertiaryContainer,
+            primaryActionTint = MaterialTheme.colorScheme.onTertiaryContainer
+        )
         ExternalServiceAccount.YOUTUBE -> ServicePalette(
             iconContainer = MaterialTheme.colorScheme.errorContainer,
             iconTint = MaterialTheme.colorScheme.onErrorContainer,
@@ -668,6 +680,7 @@ private fun accountIcon(service: ExternalServiceAccount): ImageVector {
     return when (service) {
         ExternalServiceAccount.TELEGRAM -> Icons.AutoMirrored.Rounded.Send
         ExternalServiceAccount.GOOGLE_DRIVE -> Icons.Rounded.CloudQueue
+        ExternalServiceAccount.NAVIDROME -> Icons.Rounded.MusicNote
         ExternalServiceAccount.YOUTUBE -> Icons.Rounded.MusicNote
         ExternalServiceAccount.LASTFM -> Icons.Rounded.MusicNote
     }
@@ -688,6 +701,7 @@ private fun serviceDisplayName(service: ExternalServiceAccount): String {
     return when (service) {
         ExternalServiceAccount.TELEGRAM -> stringResource(R.string.presentation_batch_b_service_telegram)
         ExternalServiceAccount.GOOGLE_DRIVE -> stringResource(R.string.auth_gdrive_title)
+        ExternalServiceAccount.NAVIDROME -> stringResource(R.string.auth_navidrome_title)
         ExternalServiceAccount.YOUTUBE -> "YouTube Client"
         ExternalServiceAccount.LASTFM -> "Last.fm"
     }
@@ -708,6 +722,12 @@ private fun openService(
         }
         ExternalServiceAccount.GOOGLE_DRIVE -> {
             Toast.makeText(context, context.getString(R.string.accounts_google_drive_soon), Toast.LENGTH_SHORT).show()
+        }
+        ExternalServiceAccount.NAVIDROME -> {
+            safeStartActivity(
+                context = context,
+                intent = Intent(context, NavidromeLoginActivity::class.java)
+            )
         }
         ExternalServiceAccount.YOUTUBE -> {
             onOpenYoutubeAuth()

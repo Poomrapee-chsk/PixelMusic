@@ -78,6 +78,7 @@ object LocalArtworkUri {
         val normalized = contentUriString.lowercase()
         return !normalized.startsWith("telegram://") &&
             !normalized.startsWith("gdrive://") &&
+            !normalized.startsWith("navidrome://") &&
             !normalized.startsWith("youtube://")
     }
 

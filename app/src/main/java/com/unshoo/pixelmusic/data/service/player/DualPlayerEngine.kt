@@ -80,6 +80,7 @@ class DualPlayerEngine @Inject constructor(
     private val telegramStreamProxy: com.unshoo.pixelmusic.data.telegram.TelegramStreamProxy,
 
     private val gdriveStreamProxy: com.unshoo.pixelmusic.data.gdrive.GDriveStreamProxy,
+    private val navidromeStreamProxy: com.unshoo.pixelmusic.data.navidrome.NavidromeStreamProxy,
     private val telegramCacheManager: com.unshoo.pixelmusic.data.telegram.TelegramCacheManager,
     private val connectivityStateHolder: com.unshoo.pixelmusic.presentation.viewmodel.ConnectivityStateHolder,
     private val exoCache: com.unshoo.pixelmusic.data.remote.youtube.ExoCache,
@@ -89,7 +90,7 @@ class DualPlayerEngine @Inject constructor(
         private const val AUDIO_OFFLOAD_BUFFERING_FALLBACK_MS = 4_000L
         private const val MAX_AUXILIARY_TIMELINE_ITEMS = 200
         private val LOCAL_MEDIA_SCHEMES = setOf("content", "file", "android.resource")
-        private val REMOTE_MEDIA_SCHEMES = setOf("http", "https", "telegram", "gdrive", "youtube")
+        private val REMOTE_MEDIA_SCHEMES = setOf("http", "https", "telegram", "gdrive", "navidrome", "youtube")
     }
 
     data class TransitionTarget(
@@ -680,7 +681,7 @@ class DualPlayerEngine @Inject constructor(
                 val uri = dataSpec.uri
                 val scheme = uri.scheme
                 // Only resolve custom schemes that cannot be loaded natively by ExoPlayer
-                if (scheme == "telegram" || scheme == "gdrive" || scheme == "youtube") {
+                if (scheme == "telegram" || scheme == "gdrive" || scheme == "navidrome" || scheme == "youtube") {
                     val originalUri = uri.toString()
                     val localPath = localFilePathCache[originalUri]
                     if (localPath != null && java.io.File(localPath).exists()) {
@@ -801,6 +802,7 @@ class DualPlayerEngine @Inject constructor(
                 val resolved: Uri? = when (uri.scheme) {
                     "telegram" -> resolveTelegramUriAsync(uri, uriString)
                     "gdrive" -> resolveGDriveUriAsync(uriString)
+                    "navidrome" -> resolveNavidromeUriAsync(uriString)
                     "youtube" -> resolveYoutubeUriAsync(uriString)
                     else -> null
                 }
@@ -857,6 +859,15 @@ class DualPlayerEngine @Inject constructor(
         }
         if (!gdriveStreamProxy.ensureReady(5_000L)) return@withContext null
         gdriveStreamProxy.resolveGDriveUri(uriString)?.let { Uri.parse(it) }
+    }
+
+    private suspend fun resolveNavidromeUriAsync(uriString: String): Uri? = withContext(Dispatchers.IO) {
+        if (!connectivityStateHolder.isOnline.value) {
+            connectivityStateHolder.triggerOfflineBlockedEvent()
+            return@withContext null
+        }
+        if (!navidromeStreamProxy.ensureReady(5_000L)) return@withContext null
+        navidromeStreamProxy.resolveUri(uriString)?.takeIf { it.isNotEmpty() }?.let { Uri.parse(it) }
     }
 
     private suspend fun resolveYoutubeUriAsync(uriString: String): Uri? = withContext(Dispatchers.IO) {

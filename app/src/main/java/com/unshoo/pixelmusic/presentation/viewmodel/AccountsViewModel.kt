@@ -25,6 +25,7 @@ import org.drinkless.tdlib.TdApi
 enum class ExternalServiceAccount {
     TELEGRAM,
     GOOGLE_DRIVE,
+    NAVIDROME,
     YOUTUBE,
     LASTFM
 }
@@ -48,6 +49,7 @@ class AccountsViewModel @Inject constructor(
     private val telegramRepository: TelegramRepository,
     private val musicRepository: MusicRepository,
     private val gDriveRepository: GDriveRepository,
+    private val navidromeRepository: com.unshoo.pixelmusic.data.navidrome.NavidromeRepository,
     private val datastoreRepository: com.unshoo.pixelmusic.data.remote.youtube.DatastoreRepository,
     private val syncManager: com.unshoo.pixelmusic.data.worker.SyncManager,
     private val userPreferencesRepository: UserPreferencesRepository,
@@ -78,6 +80,13 @@ class AccountsViewModel @Inject constructor(
         gDriveRepository.getFolders().map { it.size }
     ) { connected, folderCount ->
         connected to folderCount
+    }
+
+    private val navidromeStateFlow = combine(
+        navidromeRepository.isLoggedInFlow,
+        navidromeRepository.observeSyncedSongCount()
+    ) { connected, songCount ->
+        connected to songCount
     }
 
     private val youtubeStateFlow = combine(
@@ -118,7 +127,8 @@ class AccountsViewModel @Inject constructor(
                 telegramStateFlow,
                 gDriveStateFlow,
                 youtubeStateFlow,
-                lastfmStateFlow
+                lastfmStateFlow,
+                navidromeStateFlow
             )
         ) { it.toList() },
         loggingOutServices,
@@ -129,6 +139,7 @@ class AccountsViewModel @Inject constructor(
         val (gDriveConnected, gDriveFolderCount) = states[1] as Pair<Boolean, Int>
         val (youtubeConnected, youtubePlaylistCount) = states[2] as Pair<Boolean, Int>
         val (lastfmConnected, lastfmUsername, lastfmScrobbleEnabled) = states[3] as Triple<Boolean, String, Boolean>
+        val (navidromeConnected, navidromeSongCount) = states[4] as Pair<Boolean, Int>
 
         val calculatedUserName = when {
             gDriveConnected && !gDriveRepository.userDisplayName.isNullOrBlank() -> gDriveRepository.userDisplayName
@@ -172,6 +183,25 @@ class AccountsViewModel @Inject constructor(
                     )
                 )
             }
+            if (navidromeConnected) {
+                add(
+                    ExternalAccountUiModel(
+                        service = ExternalServiceAccount.NAVIDROME,
+                        title = "Subsonic / Navidrome",
+                        accountLabel = listOfNotNull(
+                            navidromeRepository.username,
+                            navidromeRepository.serverUrl
+                                ?.substringAfter("://")
+                        ).joinToString(" @ ").ifBlank { "Server connected" },
+                        syncedContentLabel = formatCount(
+                            count = navidromeSongCount,
+                            singular = "synced song",
+                            plural = "synced songs"
+                        ),
+                        isLoggingOut = ExternalServiceAccount.NAVIDROME in activeLogouts
+                    )
+                )
+            }
             if (youtubeConnected) {
                 add(
                     ExternalAccountUiModel(
@@ -203,6 +233,7 @@ class AccountsViewModel @Inject constructor(
         val disconnectedServices = buildList {
             if (!telegramConnected) add(ExternalServiceAccount.TELEGRAM)
             if (!gDriveConnected) add(ExternalServiceAccount.GOOGLE_DRIVE)
+            if (!navidromeConnected) add(ExternalServiceAccount.NAVIDROME)
             if (!youtubeConnected) add(ExternalServiceAccount.YOUTUBE)
             if (!lastfmConnected) add(ExternalServiceAccount.LASTFM)
         }
@@ -228,6 +259,7 @@ class AccountsViewModel @Inject constructor(
                             musicRepository.clearTelegramData()
                         }
                         ExternalServiceAccount.GOOGLE_DRIVE -> gDriveRepository.logout()
+                        ExternalServiceAccount.NAVIDROME -> navidromeRepository.logout()
                         ExternalServiceAccount.YOUTUBE -> {
                             datastoreRepository.saveCookies(com.unshoo.pixelmusic.data.model.youtube.Cookies(""))
                             datastoreRepository.saveDataSyncId("")

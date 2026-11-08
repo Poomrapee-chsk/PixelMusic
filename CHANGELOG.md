@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Navidrome / Subsonic streaming**:
+  - Connect any Subsonic-compatible server (Navidrome, Gonic, Airsonic, Ampache…) from Accounts. Credentials are stored in encrypted preferences; token auth is used, with automatic fallback to legacy auth for servers that don't support it.
+  - Library sync imports every song (fast `search3` path on Navidrome, album-by-album fallback elsewhere) into the unified library, plus server playlists as `NAVIDROME` playlists.
+  - `navidrome://` songs stream through a local proxy that signs `stream.view` requests per request, so credentials never reach ExoPlayer, the media session or the database. Cover art is stored unsigned and signed by the image loader.
+  - Playback is reported back to the server ("now playing" + scrobble on track completion).
+
 ## [1.5.06] - Unreleased
 
 ### Added

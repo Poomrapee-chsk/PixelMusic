@@ -61,6 +61,7 @@ class PhoneDirectWatchTransferCoordinator @Inject constructor(
     private val telegramStreamProxy: Lazy<TelegramStreamProxy>,
 
     private val gDriveStreamProxy: GDriveStreamProxy,
+    private val navidromeStreamProxy: com.unshoo.pixelmusic.data.navidrome.NavidromeStreamProxy,
     private val okHttpClient: OkHttpClient,
 ) {
     private val contentResolver by lazy { application.contentResolver }
@@ -392,6 +393,10 @@ class PhoneDirectWatchTransferCoordinator @Inject constructor(
             "gdrive" -> {
                 ensureGDriveProxyReady() || return null
                 gDriveStreamProxy.resolveGDriveUri(rawUri)
+            }
+            "navidrome" -> {
+                if (!navidromeStreamProxy.ensureReady(5_000L)) return null
+                navidromeStreamProxy.resolveUri(rawUri)?.takeIf { it.isNotEmpty() }
             }
             else -> null
         }

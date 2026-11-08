@@ -250,7 +250,8 @@ object AppModule {
     @Provides
     @Singleton
     fun provideImageLoader(
-        @ApplicationContext context: Context
+        @ApplicationContext context: Context,
+        navidromeCredentialsStore: com.unshoo.pixelmusic.data.navidrome.NavidromeCredentialsStore
     ): ImageLoader {
         // Add interceptor for QQ Music images
         val okHttpClient = OkHttpClient.Builder()
@@ -264,7 +265,11 @@ object AppModule {
                         .header("Referer", "https://y.qq.com/")
                         .build()
                 } else {
-                    request
+                    // Subsonic cover art is stored without credentials (stable cache key);
+                    // sign it just before it goes on the wire.
+                    navidromeCredentialsStore.signIfNavidromeUrl(request.url)
+                        ?.let { signedUrl -> request.newBuilder().url(signedUrl).build() }
+                        ?: request
                 }
 
                 chain.proceed(newRequest)

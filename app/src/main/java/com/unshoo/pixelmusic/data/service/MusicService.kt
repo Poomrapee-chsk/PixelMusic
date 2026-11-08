@@ -156,6 +156,8 @@ class MusicService : MediaLibraryService() {
     lateinit var exoCache: ExoCache
     @Inject
     lateinit var engagementDao: com.unshoo.pixelmusic.data.database.EngagementDao
+    @Inject
+    lateinit var navidromeRepository: com.unshoo.pixelmusic.data.navidrome.NavidromeRepository
 
     private var scrobbleManager: com.unshoo.pixelmusic.data.lastfm.ScrobbleManager? = null
 
@@ -209,6 +211,8 @@ class MusicService : MediaLibraryService() {
     private var temporaryForegroundStartedInOnCreate = false
 
     companion object {
+        private const val NAVIDROME_NOW_PLAYING_INTERVAL_MS = 4 * 60 * 1000L
+        private const val NAVIDROME_DUPLICATE_SUBMISSION_WINDOW_MS = 15_000L
         private const val TAG = "MusicService_PixelMusic"
         const val NOTIFICATION_ID = 101
         const val ACTION_SLEEP_TIMER_EXPIRED = "com.unshoo.pixelmusic.ACTION_SLEEP_TIMER_EXPIRED"
@@ -1198,12 +1202,73 @@ class MusicService : MediaLibraryService() {
         return startCommandResult
     }
 
-    private fun getNavidromeId(mediaItem: MediaItem?): String? = null
-    private fun isNavidromeMediaItem(mediaItem: MediaItem?): Boolean = false
-    private fun reportNavidromePlayback(state: String, mediaItem: MediaItem? = engine.masterPlayer.currentMediaItem) {}
+    private fun getNavidromeId(mediaItem: MediaItem?): String? {
+        if (mediaItem == null) return null
+        val extras = mediaItem.mediaMetadata.extras
+        extras?.getString(MediaItemBuilder.EXTERNAL_EXTRA_NAVIDROME_ID)
+            ?.takeIf { it.isNotBlank() }
+            ?.let { return it }
+        val rawUri = extras?.getString(MediaItemBuilder.EXTERNAL_EXTRA_CONTENT_URI)
+            ?: mediaItem.localConfiguration?.uri?.toString()
+            ?: return null
+        val prefix = "${com.unshoo.pixelmusic.data.navidrome.NavidromeRepository.URI_SCHEME}://"
+        return rawUri.takeIf { it.startsWith(prefix) }?.removePrefix(prefix)?.takeIf { it.isNotBlank() }
+    }
+
+    private fun isNavidromeMediaItem(mediaItem: MediaItem?): Boolean = getNavidromeId(mediaItem) != null
+
+    /** Last song reported as "now playing", used to avoid spamming the server on seeks/resumes. */
+    private var lastNavidromeNowPlayingId: String? = null
+    private var lastNavidromeSubmission: Pair<String, Long>? = null
+
+    /**
+     * Reports playback to the Subsonic server:
+     * - "starting"/"playing" mark the song as now playing (`scrobble?submission=false`)
+     * - "stopped" for a track that finished records a play (`scrobble?submission=true`)
+     */
+    private fun reportNavidromePlayback(state: String, mediaItem: MediaItem? = engine.masterPlayer.currentMediaItem) {
+        val songId = getNavidromeId(mediaItem) ?: return
+        if (!navidromeRepository.isLoggedIn) return
+        when (state) {
+            "starting", "playing" -> {
+                if (lastNavidromeNowPlayingId == songId && state == "playing") return
+                lastNavidromeNowPlayingId = songId
+                appScope.launch(Dispatchers.IO) { navidromeRepository.reportNowPlaying(songId) }
+            }
+            "stopped" -> {
+                if (lastNavidromeNowPlayingId == songId) lastNavidromeNowPlayingId = null
+                val playedAt = System.currentTimeMillis()
+                // ENDED is reported by both onIsPlayingChanged and onPlaybackStateChanged.
+                val previous = lastNavidromeSubmission
+                if (previous != null && previous.first == songId &&
+                    playedAt - previous.second < NAVIDROME_DUPLICATE_SUBMISSION_WINDOW_MS
+                ) return
+                lastNavidromeSubmission = songId to playedAt
+                appScope.launch(Dispatchers.IO) { navidromeRepository.reportPlayed(songId, playedAt) }
+            }
+        }
+    }
+
     private var navidromePlaybackReportJob: Job? = null
-    private fun startNavidromePlaybackReporting() {}
-    private fun stopNavidromePlaybackReporting() {}
+
+    /** Re-sends "now playing" periodically; servers drop now-playing entries after a few minutes. */
+    private fun startNavidromePlaybackReporting() {
+        if (!isNavidromeMediaItem(engine.masterPlayer.currentMediaItem)) return
+        if (navidromePlaybackReportJob?.isActive == true) return
+        navidromePlaybackReportJob = serviceScope.launch {
+            while (true) {
+                delay(NAVIDROME_NOW_PLAYING_INTERVAL_MS)
+                val item = engine.masterPlayer.currentMediaItem
+                val songId = getNavidromeId(item) ?: break
+                appScope.launch(Dispatchers.IO) { navidromeRepository.reportNowPlaying(songId) }
+            }
+        }
+    }
+
+    private fun stopNavidromePlaybackReporting() {
+        navidromePlaybackReportJob?.cancel()
+        navidromePlaybackReportJob = null
+    }
 
     private val playerListener = object : Player.Listener {
         override fun onVolumeChanged(volume: Float) {
@@ -1726,7 +1791,6 @@ class MusicService : MediaLibraryService() {
 
     override fun onDestroy() {
         listeningStatsTracker.finalizeCurrentSession(forceSynchronousPersistence = true)
-        reportNavidromePlayback("stopped")
         stopNavidromePlaybackReporting()
         playbackSnapshotPersistJob?.cancel()
         mediaSessionButtonRefreshJob?.cancel()

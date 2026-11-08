@@ -45,6 +45,18 @@ interface LocalPlaylistDao {
     @Query("DELETE FROM playlist_songs")
     suspend fun clearAllPlaylistSongs()
 
+    @Query("SELECT id FROM playlists WHERE source = :source")
+    suspend fun getPlaylistIdsBySource(source: String): List<String>
+
+    @Query("SELECT COUNT(*) FROM playlists WHERE source = :source")
+    fun observePlaylistCountBySource(source: String): Flow<Int>
+
+    @Query("DELETE FROM playlist_songs WHERE playlist_id IN (SELECT id FROM playlists WHERE source = :source)")
+    suspend fun deletePlaylistSongsBySource(source: String)
+
+    @Query("DELETE FROM playlists WHERE source = :source")
+    suspend fun deletePlaylistsBySource(source: String)
+
     @Query("DELETE FROM playlists")
     suspend fun clearAllPlaylists()
 

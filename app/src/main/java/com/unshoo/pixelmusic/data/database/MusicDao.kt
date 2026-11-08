@@ -257,6 +257,9 @@ interface MusicDao {
     @Query("SELECT id FROM songs WHERE source_type = 5")
     suspend fun getAllNavidromeSongIds(): List<Long>
 
+    @Query("SELECT COUNT(*) FROM songs WHERE source_type = :sourceType")
+    fun observeSongCountBySourceType(sourceType: Int): Flow<Int>
+
     @Query("SELECT id FROM songs WHERE source_type = 6")
     suspend fun getAllJellyfinSongIds(): List<Long>
 

@@ -73,6 +73,31 @@ private const val SONG_DETAIL_PROJECTION = """
 
 // Projection for list queries: excludes lyrics to prevent CursorWindow overflow (2MB limit)
 // when loading large libraries. Lyrics are only needed for the Now Playing screen (getSongById).
+/**
+ * Which `songs` rows count as part of the user's library (Songs, Albums, Artists, search).
+ *
+ * - Local files (source_type 0) and synced Navidrome/Subsonic songs (source_type 5,
+ *   see [SourceType]) always count: they are the user's own collection.
+ * - Other streaming sources (YouTube, Telegram, …) only count when favorited, in a
+ *   playlist, or by an artist the user follows/has in their library, so songs that were
+ *   merely browsed or cached don't flood the library.
+ *
+ * Column names are qualified with `songs.` so the filter works both in `FROM songs`
+ * queries and inside `LEFT JOIN songs ON … AND (filter)` clauses.
+ */
+private const val LIBRARY_MEMBERSHIP_FILTER = """
+            songs.source_type IN (0, 5)
+            OR songs.is_favorite = 1
+            OR CAST(songs.id AS TEXT) IN (SELECT song_id FROM playlist_songs)
+            OR songs.artist_id IN (
+                SELECT id FROM artists WHERE channel_id IS NOT NULL AND channel_id != ''
+                UNION
+                SELECT artist_id FROM songs WHERE source_type = 0 OR is_favorite = 1
+                UNION
+                SELECT artist_id FROM songs WHERE CAST(id AS TEXT) IN (SELECT song_id FROM playlist_songs) GROUP BY artist_id HAVING COUNT(id) > 3
+            )
+"""
+
 private const val SONG_LIST_PROJECTION = """
     id, title, artist_name, artist_id, album_artist, album_name, album_id,
     content_uri_string, album_art_uri_string, duration, genre, file_path,
@@ -467,16 +492,7 @@ interface MusicDao {
         INNER JOIN songs_fts ON songs_fts.rowid = songs.id
         WHERE (:applyDirectoryFilter = 0 OR songs.id < 0 OR songs.parent_directory_path IN (:allowedParentDirs))
         AND (
-            songs.source_type IN (0, 5)
-            OR songs.is_favorite = 1
-            OR CAST(songs.id AS TEXT) IN (SELECT song_id FROM playlist_songs)
-            OR songs.artist_id IN (
-                SELECT id FROM artists WHERE channel_id IS NOT NULL AND channel_id != ''
-                UNION
-                SELECT artist_id FROM songs WHERE source_type = 0 OR is_favorite = 1
-                UNION
-                SELECT artist_id FROM songs WHERE CAST(id AS TEXT) IN (SELECT song_id FROM playlist_songs) GROUP BY artist_id HAVING COUNT(id) > 3
-            )
+            """ + LIBRARY_MEMBERSHIP_FILTER + """
         )
         AND songs_fts MATCH :matchQuery
         ORDER BY songs.title ASC
@@ -491,16 +507,7 @@ interface MusicDao {
         SELECT * FROM songs
         WHERE (:applyDirectoryFilter = 0 OR id < 0 OR parent_directory_path IN (:allowedParentDirs))
         AND (
-            source_type IN (0, 5)
-            OR is_favorite = 1
-            OR CAST(id AS TEXT) IN (SELECT song_id FROM playlist_songs)
-            OR artist_id IN (
-                SELECT id FROM artists WHERE channel_id IS NOT NULL AND channel_id != ''
-                UNION
-                SELECT artist_id FROM songs WHERE source_type = 0 OR is_favorite = 1
-                UNION
-                SELECT artist_id FROM songs WHERE CAST(id AS TEXT) IN (SELECT song_id FROM playlist_songs) GROUP BY artist_id HAVING COUNT(id) > 3
-            )
+            """ + LIBRARY_MEMBERSHIP_FILTER + """
         )
         AND (title LIKE '%' || :query || '%' OR artist_name LIKE '%' || :query || '%')
         ORDER BY title ASC
@@ -737,16 +744,7 @@ interface MusicDao {
         SELECT * FROM songs
         WHERE (:applyDirectoryFilter = 0 OR id < 0 OR parent_directory_path IN (:allowedParentDirs))
         AND (
-            source_type IN (0, 5)
-            OR is_favorite = 1 
-            OR CAST(id AS TEXT) IN (SELECT song_id FROM playlist_songs)
-            OR artist_id IN (
-                SELECT id FROM artists WHERE channel_id IS NOT NULL AND channel_id != ''
-                UNION
-                SELECT artist_id FROM songs WHERE source_type = 0 OR is_favorite = 1
-                UNION
-                SELECT artist_id FROM songs WHERE CAST(id AS TEXT) IN (SELECT song_id FROM playlist_songs) GROUP BY artist_id HAVING COUNT(id) > 3
-            )
+            """ + LIBRARY_MEMBERSHIP_FILTER + """
         )
         AND (
             :filterMode = 0
@@ -792,16 +790,7 @@ interface MusicDao {
         FROM songs
         WHERE (:applyDirectoryFilter = 0 OR id < 0 OR parent_directory_path IN (:allowedParentDirs))
         AND (
-            source_type IN (0, 5)
-            OR is_favorite = 1 
-            OR CAST(id AS TEXT) IN (SELECT song_id FROM playlist_songs)
-            OR artist_id IN (
-                SELECT id FROM artists WHERE channel_id IS NOT NULL AND channel_id != ''
-                UNION
-                SELECT artist_id FROM songs WHERE source_type = 0 OR is_favorite = 1
-                UNION
-                SELECT artist_id FROM songs WHERE CAST(id AS TEXT) IN (SELECT song_id FROM playlist_songs) GROUP BY artist_id HAVING COUNT(id) > 3
-            )
+            """ + LIBRARY_MEMBERSHIP_FILTER + """
         )
         AND (
             :filterMode = 0
@@ -996,16 +985,7 @@ interface MusicDao {
         INNER JOIN songs_fts ON songs_fts.rowid = songs.id
         WHERE (:applyDirectoryFilter = 0 OR songs.id < 0 OR songs.parent_directory_path IN (:allowedParentDirs))
         AND (
-            songs.source_type IN (0, 5)
-            OR songs.is_favorite = 1
-            OR CAST(songs.id AS TEXT) IN (SELECT song_id FROM playlist_songs)
-            OR songs.artist_id IN (
-                SELECT id FROM artists WHERE channel_id IS NOT NULL AND channel_id != ''
-                UNION
-                SELECT artist_id FROM songs WHERE source_type = 0 OR is_favorite = 1
-                UNION
-                SELECT artist_id FROM songs WHERE CAST(id AS TEXT) IN (SELECT song_id FROM playlist_songs) GROUP BY artist_id HAVING COUNT(id) > 3
-            )
+            """ + LIBRARY_MEMBERSHIP_FILTER + """
         )
         AND songs_fts MATCH :matchQuery
         ORDER BY songs.title ASC
@@ -1034,16 +1014,7 @@ interface MusicDao {
         INNER JOIN songs_fts ON songs_fts.rowid = songs.id
         WHERE (:applyDirectoryFilter = 0 OR songs.id < 0 OR songs.parent_directory_path IN (:allowedParentDirs))
         AND (
-            songs.source_type IN (0, 5)
-            OR songs.is_favorite = 1
-            OR CAST(songs.id AS TEXT) IN (SELECT song_id FROM playlist_songs)
-            OR songs.artist_id IN (
-                SELECT id FROM artists WHERE channel_id IS NOT NULL AND channel_id != ''
-                UNION
-                SELECT artist_id FROM songs WHERE source_type = 0 OR is_favorite = 1
-                UNION
-                SELECT artist_id FROM songs WHERE CAST(id AS TEXT) IN (SELECT song_id FROM playlist_songs) GROUP BY artist_id HAVING COUNT(id) > 3
-            )
+            """ + LIBRARY_MEMBERSHIP_FILTER + """
         )
         AND songs_fts MATCH :matchQuery
         ORDER BY songs.title ASC
@@ -1063,16 +1034,7 @@ interface MusicDao {
         SELECT * FROM songs
         WHERE (:applyDirectoryFilter = 0 OR id < 0 OR parent_directory_path IN (:allowedParentDirs))
         AND (
-            source_type IN (0, 5)
-            OR is_favorite = 1
-            OR CAST(id AS TEXT) IN (SELECT song_id FROM playlist_songs)
-            OR artist_id IN (
-                SELECT id FROM artists WHERE channel_id IS NOT NULL AND channel_id != ''
-                UNION
-                SELECT artist_id FROM songs WHERE source_type = 0 OR is_favorite = 1
-                UNION
-                SELECT artist_id FROM songs WHERE CAST(id AS TEXT) IN (SELECT song_id FROM playlist_songs) GROUP BY artist_id HAVING COUNT(id) > 3
-            )
+            """ + LIBRARY_MEMBERSHIP_FILTER + """
         )
         AND title LIKE '%' || :query || '%'
         ORDER BY title ASC
@@ -1092,16 +1054,7 @@ interface MusicDao {
         SELECT * FROM songs
         WHERE (:applyDirectoryFilter = 0 OR id < 0 OR parent_directory_path IN (:allowedParentDirs))
         AND (
-            source_type IN (0, 5)
-            OR is_favorite = 1
-            OR CAST(id AS TEXT) IN (SELECT song_id FROM playlist_songs)
-            OR artist_id IN (
-                SELECT id FROM artists WHERE channel_id IS NOT NULL AND channel_id != ''
-                UNION
-                SELECT artist_id FROM songs WHERE source_type = 0 OR is_favorite = 1
-                UNION
-                SELECT artist_id FROM songs WHERE CAST(id AS TEXT) IN (SELECT song_id FROM playlist_songs) GROUP BY artist_id HAVING COUNT(id) > 3
-            )
+            """ + LIBRARY_MEMBERSHIP_FILTER + """
         )
         AND (title LIKE '%' || :query || '%' OR artist_name LIKE '%' || :query || '%')
         ORDER BY title ASC
@@ -1182,16 +1135,7 @@ interface MusicDao {
         INNER JOIN albums ON albums.id = songs.album_id
         WHERE (:applyDirectoryFilter = 0 OR songs.id < 0 OR songs.parent_directory_path IN (:allowedParentDirs))
         AND (
-            songs.source_type IN (0, 5)
-            OR songs.is_favorite = 1 
-            OR CAST(songs.id AS TEXT) IN (SELECT song_id FROM playlist_songs)
-            OR songs.artist_id IN (
-                SELECT id FROM artists WHERE channel_id IS NOT NULL AND channel_id != ''
-                UNION
-                SELECT artist_id FROM songs WHERE source_type = 0 OR is_favorite = 1
-                UNION
-                SELECT artist_id FROM songs WHERE CAST(id AS TEXT) IN (SELECT song_id FROM playlist_songs) GROUP BY artist_id HAVING COUNT(id) > 3
-            )
+            """ + LIBRARY_MEMBERSHIP_FILTER + """
         )
         AND (
             :filterMode = 0
@@ -1242,16 +1186,7 @@ interface MusicDao {
         INNER JOIN albums ON albums.id = songs.album_id
         WHERE (:applyDirectoryFilter = 0 OR songs.id < 0 OR songs.parent_directory_path IN (:allowedParentDirs))
         AND (
-            songs.source_type IN (0, 5)
-            OR songs.is_favorite = 1 
-            OR CAST(songs.id AS TEXT) IN (SELECT song_id FROM playlist_songs)
-            OR songs.artist_id IN (
-                SELECT id FROM artists WHERE channel_id IS NOT NULL AND channel_id != ''
-                UNION
-                SELECT artist_id FROM songs WHERE source_type = 0 OR is_favorite = 1
-                UNION
-                SELECT artist_id FROM songs WHERE CAST(id AS TEXT) IN (SELECT song_id FROM playlist_songs) GROUP BY artist_id HAVING COUNT(id) > 3
-            )
+            """ + LIBRARY_MEMBERSHIP_FILTER + """
         )
         AND (
             :filterMode = 0
@@ -1315,16 +1250,7 @@ interface MusicDao {
         INNER JOIN albums ON albums.id = songs.album_id
         WHERE (:applyDirectoryFilter = 0 OR songs.id < 0 OR songs.parent_directory_path IN (:allowedParentDirs))
         AND (
-            songs.source_type IN (0, 5)
-            OR songs.is_favorite = 1 
-            OR CAST(songs.id AS TEXT) IN (SELECT song_id FROM playlist_songs)
-            OR songs.artist_id IN (
-                SELECT id FROM artists WHERE channel_id IS NOT NULL AND channel_id != ''
-                UNION
-                SELECT artist_id FROM songs WHERE source_type = 0 OR is_favorite = 1
-                UNION
-                SELECT artist_id FROM songs WHERE CAST(id AS TEXT) IN (SELECT song_id FROM playlist_songs) GROUP BY artist_id HAVING COUNT(id) > 3
-            )
+            """ + LIBRARY_MEMBERSHIP_FILTER + """
         )
         AND (
             :filterMode = 0
@@ -1438,16 +1364,7 @@ interface MusicDao {
         INNER JOIN albums ON albums.id = songs.album_id
         WHERE (:applyDirectoryFilter = 0 OR songs.id < 0 OR songs.parent_directory_path IN (:allowedParentDirs))
         AND (
-            songs.source_type IN (0, 5)
-            OR songs.is_favorite = 1 
-            OR CAST(songs.id AS TEXT) IN (SELECT song_id FROM playlist_songs)
-            OR songs.artist_id IN (
-                SELECT id FROM artists WHERE channel_id IS NOT NULL AND channel_id != ''
-                UNION
-                SELECT artist_id FROM songs WHERE source_type = 0 OR is_favorite = 1
-                UNION
-                SELECT artist_id FROM songs WHERE CAST(id AS TEXT) IN (SELECT song_id FROM playlist_songs) GROUP BY artist_id HAVING COUNT(id) > 3
-            )
+            """ + LIBRARY_MEMBERSHIP_FILTER + """
         )
         GROUP BY
             albums.id,
@@ -1532,16 +1449,7 @@ interface MusicDao {
     @Query("""
         SELECT DISTINCT artists.* FROM artists
         LEFT JOIN songs ON artists.id = songs.artist_id AND (
-            songs.source_type IN (0, 5)
-            OR songs.is_favorite = 1 
-            OR CAST(songs.id AS TEXT) IN (SELECT song_id FROM playlist_songs)
-            OR songs.artist_id IN (
-                SELECT id FROM artists WHERE channel_id IS NOT NULL AND channel_id != ''
-                UNION
-                SELECT artist_id FROM songs WHERE source_type = 0 OR is_favorite = 1
-                UNION
-                SELECT artist_id FROM songs WHERE CAST(songs.id AS TEXT) IN (SELECT song_id FROM playlist_songs) GROUP BY artist_id HAVING COUNT(id) > 3
-            )
+            """ + LIBRARY_MEMBERSHIP_FILTER + """
         )
         WHERE (artists.channel_id IS NOT NULL AND artists.channel_id != '')
            OR (songs.id IS NOT NULL AND (:applyDirectoryFilter = 0 OR songs.id < 0 OR songs.parent_directory_path IN (:allowedParentDirs)))
@@ -1558,16 +1466,7 @@ interface MusicDao {
         FROM artists
         LEFT JOIN song_artist_cross_ref ON song_artist_cross_ref.artist_id = artists.id
         LEFT JOIN songs ON song_artist_cross_ref.song_id = songs.id AND (
-            songs.source_type IN (0, 5)
-            OR songs.is_favorite = 1 
-            OR CAST(songs.id AS TEXT) IN (SELECT song_id FROM playlist_songs)
-            OR songs.artist_id IN (
-                SELECT id FROM artists WHERE channel_id IS NOT NULL AND channel_id != ''
-                UNION
-                SELECT artist_id FROM songs WHERE source_type = 0 OR is_favorite = 1
-                UNION
-                SELECT artist_id FROM songs WHERE CAST(songs.id AS TEXT) IN (SELECT song_id FROM playlist_songs) GROUP BY artist_id HAVING COUNT(id) > 3
-            )
+            """ + LIBRARY_MEMBERSHIP_FILTER + """
         )
         WHERE (artists.channel_id IS NOT NULL AND artists.channel_id != '')
            OR (
@@ -1615,16 +1514,7 @@ interface MusicDao {
         FROM artists
         LEFT JOIN song_artist_cross_ref ON song_artist_cross_ref.artist_id = artists.id
         LEFT JOIN songs ON song_artist_cross_ref.song_id = songs.id AND (
-            songs.source_type IN (0, 5)
-            OR songs.is_favorite = 1 
-            OR CAST(songs.id AS TEXT) IN (SELECT song_id FROM playlist_songs)
-            OR songs.artist_id IN (
-                SELECT id FROM artists WHERE channel_id IS NOT NULL AND channel_id != ''
-                UNION
-                SELECT artist_id FROM songs WHERE source_type = 0 OR is_favorite = 1
-                UNION
-                SELECT artist_id FROM songs WHERE CAST(songs.id AS TEXT) IN (SELECT song_id FROM playlist_songs) GROUP BY artist_id HAVING COUNT(id) > 3
-            )
+            """ + LIBRARY_MEMBERSHIP_FILTER + """
         )
         WHERE artists.id < 0
           AND ((artists.channel_id IS NOT NULL AND artists.channel_id != '') OR songs.id IS NOT NULL)
@@ -1647,16 +1537,7 @@ interface MusicDao {
         FROM artists
         LEFT JOIN song_artist_cross_ref ON song_artist_cross_ref.artist_id = artists.id
         LEFT JOIN songs ON song_artist_cross_ref.song_id = songs.id AND (
-            songs.source_type IN (0, 5)
-            OR songs.is_favorite = 1 
-            OR CAST(songs.id AS TEXT) IN (SELECT song_id FROM playlist_songs)
-            OR songs.artist_id IN (
-                SELECT id FROM artists WHERE channel_id IS NOT NULL AND channel_id != ''
-                UNION
-                SELECT artist_id FROM songs WHERE source_type = 0 OR is_favorite = 1
-                UNION
-                SELECT artist_id FROM songs WHERE CAST(songs.id AS TEXT) IN (SELECT song_id FROM playlist_songs) GROUP BY artist_id HAVING COUNT(id) > 3
-            )
+            """ + LIBRARY_MEMBERSHIP_FILTER + """
         )
         WHERE (artists.channel_id IS NOT NULL AND artists.channel_id != '')
            OR (
@@ -1709,16 +1590,7 @@ interface MusicDao {
     @Query("""
         SELECT DISTINCT artists.* FROM artists
         LEFT JOIN songs ON artists.id = songs.artist_id AND (
-            songs.source_type IN (0, 5)
-            OR songs.is_favorite = 1
-            OR CAST(songs.id AS TEXT) IN (SELECT song_id FROM playlist_songs)
-            OR songs.artist_id IN (
-                SELECT id FROM artists WHERE channel_id IS NOT NULL AND channel_id != ''
-                UNION
-                SELECT artist_id FROM songs WHERE source_type = 0 OR is_favorite = 1
-                UNION
-                SELECT artist_id FROM songs WHERE CAST(songs.id AS TEXT) IN (SELECT song_id FROM playlist_songs) GROUP BY artist_id HAVING COUNT(id) > 3
-            )
+            """ + LIBRARY_MEMBERSHIP_FILTER + """
         )
         WHERE ((artists.channel_id IS NOT NULL AND artists.channel_id != '') OR songs.id IS NOT NULL)
         AND artists.name LIKE '%' || :query || '%'
@@ -1733,16 +1605,7 @@ interface MusicDao {
     @Query("""
         SELECT DISTINCT artists.* FROM artists
         LEFT JOIN songs ON artists.id = songs.artist_id AND (
-            songs.source_type IN (0, 5)
-            OR songs.is_favorite = 1 
-            OR CAST(songs.id AS TEXT) IN (SELECT song_id FROM playlist_songs)
-            OR songs.artist_id IN (
-                SELECT id FROM artists WHERE channel_id IS NOT NULL AND channel_id != ''
-                UNION
-                SELECT artist_id FROM songs WHERE source_type = 0 OR is_favorite = 1
-                UNION
-                SELECT artist_id FROM songs WHERE CAST(songs.id AS TEXT) IN (SELECT song_id FROM playlist_songs) GROUP BY artist_id HAVING COUNT(id) > 3
-            )
+            """ + LIBRARY_MEMBERSHIP_FILTER + """
         )
         WHERE (artists.channel_id IS NOT NULL AND artists.channel_id != '')
            OR (songs.id IS NOT NULL AND (:applyDirectoryFilter = 0 OR songs.id < 0 OR songs.parent_directory_path IN (:allowedParentDirs)))
@@ -1765,16 +1628,7 @@ interface MusicDao {
         FROM artists
         LEFT JOIN song_artist_cross_ref ON song_artist_cross_ref.artist_id = artists.id
         LEFT JOIN songs ON song_artist_cross_ref.song_id = songs.id AND (
-            songs.source_type IN (0, 5)
-            OR songs.is_favorite = 1 
-            OR CAST(songs.id AS TEXT) IN (SELECT song_id FROM playlist_songs)
-            OR songs.artist_id IN (
-                SELECT id FROM artists WHERE channel_id IS NOT NULL AND channel_id != ''
-                UNION
-                SELECT artist_id FROM songs WHERE source_type = 0 OR is_favorite = 1
-                UNION
-                SELECT artist_id FROM songs WHERE CAST(songs.id AS TEXT) IN (SELECT song_id FROM playlist_songs) GROUP BY artist_id HAVING COUNT(id) > 3
-            )
+            """ + LIBRARY_MEMBERSHIP_FILTER + """
         )
         WHERE ((artists.channel_id IS NOT NULL AND artists.channel_id != '')
            OR (songs.id IS NOT NULL AND (:applyDirectoryFilter = 0 OR songs.id < 0 OR songs.parent_directory_path IN (:allowedParentDirs))))

@@ -467,7 +467,7 @@ interface MusicDao {
         INNER JOIN songs_fts ON songs_fts.rowid = songs.id
         WHERE (:applyDirectoryFilter = 0 OR songs.id < 0 OR songs.parent_directory_path IN (:allowedParentDirs))
         AND (
-            songs.source_type = 0
+            songs.source_type IN (0, 5)
             OR songs.is_favorite = 1
             OR CAST(songs.id AS TEXT) IN (SELECT song_id FROM playlist_songs)
             OR songs.artist_id IN (
@@ -491,7 +491,7 @@ interface MusicDao {
         SELECT * FROM songs
         WHERE (:applyDirectoryFilter = 0 OR id < 0 OR parent_directory_path IN (:allowedParentDirs))
         AND (
-            source_type = 0
+            source_type IN (0, 5)
             OR is_favorite = 1
             OR CAST(id AS TEXT) IN (SELECT song_id FROM playlist_songs)
             OR artist_id IN (
@@ -737,7 +737,7 @@ interface MusicDao {
         SELECT * FROM songs
         WHERE (:applyDirectoryFilter = 0 OR id < 0 OR parent_directory_path IN (:allowedParentDirs))
         AND (
-            source_type = 0 
+            source_type IN (0, 5)
             OR is_favorite = 1 
             OR CAST(id AS TEXT) IN (SELECT song_id FROM playlist_songs)
             OR artist_id IN (
@@ -792,7 +792,7 @@ interface MusicDao {
         FROM songs
         WHERE (:applyDirectoryFilter = 0 OR id < 0 OR parent_directory_path IN (:allowedParentDirs))
         AND (
-            source_type = 0 
+            source_type IN (0, 5)
             OR is_favorite = 1 
             OR CAST(id AS TEXT) IN (SELECT song_id FROM playlist_songs)
             OR artist_id IN (
@@ -996,7 +996,7 @@ interface MusicDao {
         INNER JOIN songs_fts ON songs_fts.rowid = songs.id
         WHERE (:applyDirectoryFilter = 0 OR songs.id < 0 OR songs.parent_directory_path IN (:allowedParentDirs))
         AND (
-            songs.source_type = 0
+            songs.source_type IN (0, 5)
             OR songs.is_favorite = 1
             OR CAST(songs.id AS TEXT) IN (SELECT song_id FROM playlist_songs)
             OR songs.artist_id IN (
@@ -1034,7 +1034,7 @@ interface MusicDao {
         INNER JOIN songs_fts ON songs_fts.rowid = songs.id
         WHERE (:applyDirectoryFilter = 0 OR songs.id < 0 OR songs.parent_directory_path IN (:allowedParentDirs))
         AND (
-            songs.source_type = 0
+            songs.source_type IN (0, 5)
             OR songs.is_favorite = 1
             OR CAST(songs.id AS TEXT) IN (SELECT song_id FROM playlist_songs)
             OR songs.artist_id IN (
@@ -1063,7 +1063,7 @@ interface MusicDao {
         SELECT * FROM songs
         WHERE (:applyDirectoryFilter = 0 OR id < 0 OR parent_directory_path IN (:allowedParentDirs))
         AND (
-            source_type = 0
+            source_type IN (0, 5)
             OR is_favorite = 1
             OR CAST(id AS TEXT) IN (SELECT song_id FROM playlist_songs)
             OR artist_id IN (
@@ -1092,7 +1092,7 @@ interface MusicDao {
         SELECT * FROM songs
         WHERE (:applyDirectoryFilter = 0 OR id < 0 OR parent_directory_path IN (:allowedParentDirs))
         AND (
-            source_type = 0
+            source_type IN (0, 5)
             OR is_favorite = 1
             OR CAST(id AS TEXT) IN (SELECT song_id FROM playlist_songs)
             OR artist_id IN (
@@ -1182,7 +1182,7 @@ interface MusicDao {
         INNER JOIN albums ON albums.id = songs.album_id
         WHERE (:applyDirectoryFilter = 0 OR songs.id < 0 OR songs.parent_directory_path IN (:allowedParentDirs))
         AND (
-            songs.source_type = 0 
+            songs.source_type IN (0, 5)
             OR songs.is_favorite = 1 
             OR CAST(songs.id AS TEXT) IN (SELECT song_id FROM playlist_songs)
             OR songs.artist_id IN (
@@ -1242,7 +1242,7 @@ interface MusicDao {
         INNER JOIN albums ON albums.id = songs.album_id
         WHERE (:applyDirectoryFilter = 0 OR songs.id < 0 OR songs.parent_directory_path IN (:allowedParentDirs))
         AND (
-            songs.source_type = 0 
+            songs.source_type IN (0, 5)
             OR songs.is_favorite = 1 
             OR CAST(songs.id AS TEXT) IN (SELECT song_id FROM playlist_songs)
             OR songs.artist_id IN (
@@ -1315,7 +1315,7 @@ interface MusicDao {
         INNER JOIN albums ON albums.id = songs.album_id
         WHERE (:applyDirectoryFilter = 0 OR songs.id < 0 OR songs.parent_directory_path IN (:allowedParentDirs))
         AND (
-            songs.source_type = 0 
+            songs.source_type IN (0, 5)
             OR songs.is_favorite = 1 
             OR CAST(songs.id AS TEXT) IN (SELECT song_id FROM playlist_songs)
             OR songs.artist_id IN (
@@ -1438,7 +1438,7 @@ interface MusicDao {
         INNER JOIN albums ON albums.id = songs.album_id
         WHERE (:applyDirectoryFilter = 0 OR songs.id < 0 OR songs.parent_directory_path IN (:allowedParentDirs))
         AND (
-            songs.source_type = 0 
+            songs.source_type IN (0, 5)
             OR songs.is_favorite = 1 
             OR CAST(songs.id AS TEXT) IN (SELECT song_id FROM playlist_songs)
             OR songs.artist_id IN (
@@ -1532,7 +1532,7 @@ interface MusicDao {
     @Query("""
         SELECT DISTINCT artists.* FROM artists
         LEFT JOIN songs ON artists.id = songs.artist_id AND (
-            songs.source_type = 0 
+            songs.source_type IN (0, 5)
             OR songs.is_favorite = 1 
             OR CAST(songs.id AS TEXT) IN (SELECT song_id FROM playlist_songs)
             OR songs.artist_id IN (
@@ -1558,7 +1558,7 @@ interface MusicDao {
         FROM artists
         LEFT JOIN song_artist_cross_ref ON song_artist_cross_ref.artist_id = artists.id
         LEFT JOIN songs ON song_artist_cross_ref.song_id = songs.id AND (
-            songs.source_type = 0 
+            songs.source_type IN (0, 5)
             OR songs.is_favorite = 1 
             OR CAST(songs.id AS TEXT) IN (SELECT song_id FROM playlist_songs)
             OR songs.artist_id IN (
@@ -1615,7 +1615,7 @@ interface MusicDao {
         FROM artists
         LEFT JOIN song_artist_cross_ref ON song_artist_cross_ref.artist_id = artists.id
         LEFT JOIN songs ON song_artist_cross_ref.song_id = songs.id AND (
-            songs.source_type = 0 
+            songs.source_type IN (0, 5)
             OR songs.is_favorite = 1 
             OR CAST(songs.id AS TEXT) IN (SELECT song_id FROM playlist_songs)
             OR songs.artist_id IN (
@@ -1647,7 +1647,7 @@ interface MusicDao {
         FROM artists
         LEFT JOIN song_artist_cross_ref ON song_artist_cross_ref.artist_id = artists.id
         LEFT JOIN songs ON song_artist_cross_ref.song_id = songs.id AND (
-            songs.source_type = 0 
+            songs.source_type IN (0, 5)
             OR songs.is_favorite = 1 
             OR CAST(songs.id AS TEXT) IN (SELECT song_id FROM playlist_songs)
             OR songs.artist_id IN (
@@ -1709,7 +1709,7 @@ interface MusicDao {
     @Query("""
         SELECT DISTINCT artists.* FROM artists
         LEFT JOIN songs ON artists.id = songs.artist_id AND (
-            songs.source_type = 0
+            songs.source_type IN (0, 5)
             OR songs.is_favorite = 1
             OR CAST(songs.id AS TEXT) IN (SELECT song_id FROM playlist_songs)
             OR songs.artist_id IN (
@@ -1733,7 +1733,7 @@ interface MusicDao {
     @Query("""
         SELECT DISTINCT artists.* FROM artists
         LEFT JOIN songs ON artists.id = songs.artist_id AND (
-            songs.source_type = 0 
+            songs.source_type IN (0, 5)
             OR songs.is_favorite = 1 
             OR CAST(songs.id AS TEXT) IN (SELECT song_id FROM playlist_songs)
             OR songs.artist_id IN (
@@ -1765,7 +1765,7 @@ interface MusicDao {
         FROM artists
         LEFT JOIN song_artist_cross_ref ON song_artist_cross_ref.artist_id = artists.id
         LEFT JOIN songs ON song_artist_cross_ref.song_id = songs.id AND (
-            songs.source_type = 0 
+            songs.source_type IN (0, 5)
             OR songs.is_favorite = 1 
             OR CAST(songs.id AS TEXT) IN (SELECT song_id FROM playlist_songs)
             OR songs.artist_id IN (

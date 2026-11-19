@@ -58,6 +58,7 @@ data class PlayerUiState(
     val selectedSearchFilter: SearchFilterType = SearchFilterType.ALL,
     val currentStorageFilter: com.unshoo.pixelmusic.data.model.StorageFilter = com.unshoo.pixelmusic.data.model.StorageFilter.ALL,
     val hideLocalMedia: Boolean = false,
+    val hideCloudDuplicates: Boolean = true,
     val showQueueItemUndoBar: Boolean = false,
     val lastRemovedQueueSong: Song? = null,
     val lastRemovedQueueIndex: Int = -1

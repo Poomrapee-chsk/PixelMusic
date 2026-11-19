@@ -40,7 +40,7 @@ private fun libraryEmptySpec(
 ): LibraryEmptySpec {
     return when (tabId) {
         LibraryTabId.SONGS -> when (storageFilter) {
-            StorageFilter.ALL -> LibraryEmptySpec(
+            StorageFilter.ALL, StorageFilter.ALL_DEDUPLICATED -> LibraryEmptySpec(
                 iconRes = R.drawable.rounded_music_off_24,
                 titleRes = R.string.lib_empty_songs_all_title,
                 subtitleRes = R.string.lib_empty_songs_all_subtitle
@@ -63,7 +63,7 @@ private fun libraryEmptySpec(
         }
 
         LibraryTabId.ALBUMS -> when (storageFilter) {
-            StorageFilter.ALL -> LibraryEmptySpec(
+            StorageFilter.ALL, StorageFilter.ALL_DEDUPLICATED -> LibraryEmptySpec(
                 iconRes = R.drawable.rounded_album_24,
                 titleRes = R.string.lib_empty_albums_all_title,
                 subtitleRes = R.string.lib_empty_albums_all_subtitle
@@ -86,7 +86,7 @@ private fun libraryEmptySpec(
         }
 
         LibraryTabId.ARTISTS -> when (storageFilter) {
-            StorageFilter.ALL -> LibraryEmptySpec(
+            StorageFilter.ALL, StorageFilter.ALL_DEDUPLICATED -> LibraryEmptySpec(
                 iconRes = R.drawable.rounded_artist_24,
                 titleRes = R.string.lib_empty_artists_all_title,
                 subtitleRes = R.string.lib_empty_artists_all_subtitle
@@ -109,7 +109,7 @@ private fun libraryEmptySpec(
         }
 
         LibraryTabId.LIKED -> when (storageFilter) {
-            StorageFilter.ALL -> LibraryEmptySpec(
+            StorageFilter.ALL, StorageFilter.ALL_DEDUPLICATED -> LibraryEmptySpec(
                 iconRes = R.drawable.round_favorite_24,
                 titleRes = R.string.lib_empty_liked_all_title,
                 subtitleRes = R.string.lib_empty_liked_all_subtitle

@@ -85,15 +85,17 @@ class LibraryStateHolder @Inject constructor(
 
     /**
      * Effective storage filter — when "hide local media" pref is on, force ONLINE so
-     * only streaming/YouTube songs appear; otherwise use the user-selected filter.
+     * only streaming/YouTube songs appear; otherwise use the user-selected filter ("All" hides
+     * streaming duplicates of local songs when the "hide cloud duplicates" pref is on).
      */
     @OptIn(ExperimentalCoroutinesApi::class)
     private val effectiveStorageFilter: Flow<StorageFilter> =
         combine(
             _currentStorageFilter,
-            userPreferencesRepository.hideLocalMediaFlow
-        ) { filter, hideLocal ->
-            if (hideLocal) StorageFilter.ONLINE else filter
+            userPreferencesRepository.hideLocalMediaFlow,
+            userPreferencesRepository.hideCloudDuplicatesFlow
+        ) { filter, hideLocal, hideCloudDuplicates ->
+            StorageFilter.resolve(filter, hideLocal, hideCloudDuplicates)
         }
 
     // --- Paging flows wired to the local Room DB ---

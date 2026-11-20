@@ -341,13 +341,13 @@ fun LibraryActionRow(
                     exit = slideOutHorizontally(targetOffsetX = { it / 2 }) + fadeOut()
                 ) {
                      val finalIcon = when(currentStorageFilter) {
-                         com.unshoo.pixelmusic.data.model.StorageFilter.ALL -> Icons.Rounded.Dataset
+                         com.unshoo.pixelmusic.data.model.StorageFilter.ALL, com.unshoo.pixelmusic.data.model.StorageFilter.ALL_DEDUPLICATED -> Icons.Rounded.Dataset
                          com.unshoo.pixelmusic.data.model.StorageFilter.ONLINE -> Icons.Rounded.Cloud
                          com.unshoo.pixelmusic.data.model.StorageFilter.OFFLINE -> Icons.Rounded.PhoneAndroid
                          com.unshoo.pixelmusic.data.model.StorageFilter.DOWNLOADED_ONLY -> Icons.Rounded.Download
                      }
                      val tooltipText = when(currentStorageFilter) {
-                         com.unshoo.pixelmusic.data.model.StorageFilter.ALL -> stringResource(R.string.library_storage_filter_all_songs)
+                         com.unshoo.pixelmusic.data.model.StorageFilter.ALL, com.unshoo.pixelmusic.data.model.StorageFilter.ALL_DEDUPLICATED -> stringResource(R.string.library_storage_filter_all_songs)
                          com.unshoo.pixelmusic.data.model.StorageFilter.ONLINE -> stringResource(R.string.library_storage_filter_online)
                          com.unshoo.pixelmusic.data.model.StorageFilter.OFFLINE -> stringResource(R.string.library_storage_filter_offline)
                          com.unshoo.pixelmusic.data.model.StorageFilter.DOWNLOADED_ONLY -> stringResource(R.string.library_storage_filter_downloaded_only)

@@ -22,6 +22,7 @@
     <string name="presentation_batch_d_topic_mode_both">Both</string>
     <string name="presentation_batch_d_cloud_sources_heading">Cloud</string>
     <string name="presentation_batch_d_cloud_only">Cloud Only</string>
+    <string name="presentation_batch_d_hide_cloud_duplicates">Hide cloud copies of local songs</string>
     <string name="presentation_batch_d_generating_ai_metadata">Generating metadata with AI…</string>
     <string name="presentation_batch_d_max_albums_selection">You can select up to %1$d albums</string>
     <string name="presentation_batch_d_folder_name_fallback">Folder</string>

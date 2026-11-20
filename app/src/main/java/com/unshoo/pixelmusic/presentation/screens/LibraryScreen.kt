@@ -409,7 +409,8 @@ private data class LibraryScreenPlayerProjection(
     val isGeneratingAiMetadata: Boolean = false,
     val isSyncingLibrary: Boolean = false,
     val isLoadingInitialSongs: Boolean = true,
-    val hideLocalMedia: Boolean = false
+    val hideLocalMedia: Boolean = false,
+    val hideCloudDuplicates: Boolean = true
 )
 
 private fun PlayerUiState.toLibraryScreenProjection(): LibraryScreenPlayerProjection =
@@ -431,7 +432,8 @@ private fun PlayerUiState.toLibraryScreenProjection(): LibraryScreenPlayerProjec
         isGeneratingAiMetadata = isGeneratingAiMetadata,
         isSyncingLibrary = isSyncingLibrary,
         isLoadingInitialSongs = isLoadingInitialSongs,
-        hideLocalMedia = hideLocalMedia
+        hideLocalMedia = hideLocalMedia,
+        hideCloudDuplicates = hideCloudDuplicates
     )
 
 @RequiresApi(Build.VERSION_CODES.R)
@@ -1502,6 +1504,17 @@ fun LibraryScreen(
                                                 MaterialTheme.colorScheme.surfaceContainerLow,
                                             boxCornerRadius = if (playerUiState.hideLocalMedia) 18.dp else 50.dp,
                                             onCheckedChange = { playerViewModel.setHideLocalMedia(it) }
+                                        )
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        com.unshoo.pixelmusic.presentation.components.LibrarySheetToggleCard(
+                                            label = stringResource(R.string.presentation_batch_d_hide_cloud_duplicates),
+                                            checked = playerUiState.hideCloudDuplicates,
+                                            boxBackgroundColor = if (playerUiState.hideCloudDuplicates)
+                                                MaterialTheme.colorScheme.tertiary
+                                            else
+                                                MaterialTheme.colorScheme.surfaceContainerLow,
+                                            boxCornerRadius = if (playerUiState.hideCloudDuplicates) 18.dp else 50.dp,
+                                            onCheckedChange = { playerViewModel.setHideCloudDuplicates(it) }
                                         )
                                     }
                                 }

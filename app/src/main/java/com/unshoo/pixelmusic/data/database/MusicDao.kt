@@ -641,6 +641,21 @@ interface MusicDao {
                 :filterMode = 3
                 AND (file_path IS NOT NULL AND file_path != '')
             )
+            OR (
+                :filterMode = 4
+                AND (
+                    source_type = 0
+                    OR NOT EXISTS (
+                        SELECT 1 FROM songs AS dup_local
+                        WHERE dup_local.source_type = 0
+                        AND dup_local.title = songs.title
+                        AND (dup_local.duration <= 0 OR songs.duration <= 0
+                            OR ABS(dup_local.duration - songs.duration) <= 3000)
+                        AND (dup_local.artist_name = songs.artist_name COLLATE NOCASE
+                            OR dup_local.album_name = songs.album_name COLLATE NOCASE)
+                    )
+                )
+            )
         )
         ORDER BY parent_directory_path ASC, title ASC
     """)
@@ -666,6 +681,21 @@ interface MusicDao {
             OR (
                 :filterMode = 3
                 AND (file_path IS NOT NULL AND file_path != '')
+            )
+            OR (
+                :filterMode = 4
+                AND (
+                    source_type = 0
+                    OR NOT EXISTS (
+                        SELECT 1 FROM songs AS dup_local
+                        WHERE dup_local.source_type = 0
+                        AND dup_local.title = songs.title
+                        AND (dup_local.duration <= 0 OR songs.duration <= 0
+                            OR ABS(dup_local.duration - songs.duration) <= 3000)
+                        AND (dup_local.artist_name = songs.artist_name COLLATE NOCASE
+                            OR dup_local.album_name = songs.album_name COLLATE NOCASE)
+                    )
+                )
             )
         )
         ORDER BY
@@ -707,6 +737,21 @@ interface MusicDao {
             OR (
                 :filterMode = 3
                 AND (songs.file_path IS NOT NULL AND songs.file_path != '')
+            )
+            OR (
+                :filterMode = 4
+                AND (
+                    songs.source_type = 0
+                    OR NOT EXISTS (
+                        SELECT 1 FROM songs AS dup_local
+                        WHERE dup_local.source_type = 0
+                        AND dup_local.title = songs.title
+                        AND (dup_local.duration <= 0 OR songs.duration <= 0
+                            OR ABS(dup_local.duration - songs.duration) <= 3000)
+                        AND (dup_local.artist_name = songs.artist_name COLLATE NOCASE
+                            OR dup_local.album_name = songs.album_name COLLATE NOCASE)
+                    )
+                )
             )
         )
         ORDER BY
@@ -761,6 +806,21 @@ interface MusicDao {
             OR (
                 :filterMode = 3
                 AND (file_path IS NOT NULL AND file_path != '')
+            )
+            OR (
+                :filterMode = 4
+                AND (
+                    source_type = 0
+                    OR NOT EXISTS (
+                        SELECT 1 FROM songs AS dup_local
+                        WHERE dup_local.source_type = 0
+                        AND dup_local.title = songs.title
+                        AND (dup_local.duration <= 0 OR songs.duration <= 0
+                            OR ABS(dup_local.duration - songs.duration) <= 3000)
+                        AND (dup_local.artist_name = songs.artist_name COLLATE NOCASE
+                            OR dup_local.album_name = songs.album_name COLLATE NOCASE)
+                    )
+                )
             )
         )
         ORDER BY
@@ -817,6 +877,21 @@ interface MusicDao {
                 :filterMode = 3
                 AND (file_path IS NOT NULL AND file_path != '')
             )
+            OR (
+                :filterMode = 4
+                AND (
+                    source_type = 0
+                    OR NOT EXISTS (
+                        SELECT 1 FROM songs AS dup_local
+                        WHERE dup_local.source_type = 0
+                        AND dup_local.title = songs.title
+                        AND (dup_local.duration <= 0 OR songs.duration <= 0
+                            OR ABS(dup_local.duration - songs.duration) <= 3000)
+                        AND (dup_local.artist_name = songs.artist_name COLLATE NOCASE
+                            OR dup_local.album_name = songs.album_name COLLATE NOCASE)
+                    )
+                )
+            )
         )
         ORDER BY
             CASE WHEN :sortOrder = 'song_default_order' THEN track_number END ASC,
@@ -866,6 +941,21 @@ interface MusicDao {
                 :filterMode = 3
                 AND (songs.file_path IS NOT NULL AND songs.file_path != '')
             )
+            OR (
+                :filterMode = 4
+                AND (
+                    songs.source_type = 0
+                    OR NOT EXISTS (
+                        SELECT 1 FROM songs AS dup_local
+                        WHERE dup_local.source_type = 0
+                        AND dup_local.title = songs.title
+                        AND (dup_local.duration <= 0 OR songs.duration <= 0
+                            OR ABS(dup_local.duration - songs.duration) <= 3000)
+                        AND (dup_local.artist_name = songs.artist_name COLLATE NOCASE
+                            OR dup_local.album_name = songs.album_name COLLATE NOCASE)
+                    )
+                )
+            )
         )
         ORDER BY
             CASE WHEN :sortOrder = 'liked_title_az' THEN songs.title END COLLATE NOCASE ASC,
@@ -907,6 +997,21 @@ interface MusicDao {
                 :filterMode = 3
                 AND (songs.file_path IS NOT NULL AND songs.file_path != '')
             )
+            OR (
+                :filterMode = 4
+                AND (
+                    songs.source_type = 0
+                    OR NOT EXISTS (
+                        SELECT 1 FROM songs AS dup_local
+                        WHERE dup_local.source_type = 0
+                        AND dup_local.title = songs.title
+                        AND (dup_local.duration <= 0 OR songs.duration <= 0
+                            OR ABS(dup_local.duration - songs.duration) <= 3000)
+                        AND (dup_local.artist_name = songs.artist_name COLLATE NOCASE
+                            OR dup_local.album_name = songs.album_name COLLATE NOCASE)
+                    )
+                )
+            )
         )
         ORDER BY songs.title COLLATE NOCASE ASC
     """)
@@ -934,6 +1039,21 @@ interface MusicDao {
             OR (
                 :filterMode = 3
                 AND (songs.file_path IS NOT NULL AND songs.file_path != '')
+            )
+            OR (
+                :filterMode = 4
+                AND (
+                    songs.source_type = 0
+                    OR NOT EXISTS (
+                        SELECT 1 FROM songs AS dup_local
+                        WHERE dup_local.source_type = 0
+                        AND dup_local.title = songs.title
+                        AND (dup_local.duration <= 0 OR songs.duration <= 0
+                            OR ABS(dup_local.duration - songs.duration) <= 3000)
+                        AND (dup_local.artist_name = songs.artist_name COLLATE NOCASE
+                            OR dup_local.album_name = songs.album_name COLLATE NOCASE)
+                    )
+                )
             )
         )
         ORDER BY
@@ -978,6 +1098,21 @@ interface MusicDao {
             OR (
                 :filterMode = 3
                 AND (songs.file_path IS NOT NULL AND songs.file_path != '')
+            )
+            OR (
+                :filterMode = 4
+                AND (
+                    songs.source_type = 0
+                    OR NOT EXISTS (
+                        SELECT 1 FROM songs AS dup_local
+                        WHERE dup_local.source_type = 0
+                        AND dup_local.title = songs.title
+                        AND (dup_local.duration <= 0 OR songs.duration <= 0
+                            OR ABS(dup_local.duration - songs.duration) <= 3000)
+                        AND (dup_local.artist_name = songs.artist_name COLLATE NOCASE
+                            OR dup_local.album_name = songs.album_name COLLATE NOCASE)
+                    )
+                )
             )
         )
     """)
@@ -1207,6 +1342,21 @@ interface MusicDao {
                 :filterMode = 3
                 AND (songs.file_path IS NOT NULL AND songs.file_path != '')
             )
+            OR (
+                :filterMode = 4
+                AND (
+                    songs.source_type = 0
+                    OR NOT EXISTS (
+                        SELECT 1 FROM songs AS dup_local
+                        WHERE dup_local.source_type = 0
+                        AND dup_local.title = songs.title
+                        AND (dup_local.duration <= 0 OR songs.duration <= 0
+                            OR ABS(dup_local.duration - songs.duration) <= 3000)
+                        AND (dup_local.artist_name = songs.artist_name COLLATE NOCASE
+                            OR dup_local.album_name = songs.album_name COLLATE NOCASE)
+                    )
+                )
+            )
         )
         GROUP BY
             albums.id,
@@ -1266,6 +1416,21 @@ interface MusicDao {
             OR (
                 :filterMode = 3
                 AND (songs.file_path IS NOT NULL AND songs.file_path != '')
+            )
+            OR (
+                :filterMode = 4
+                AND (
+                    songs.source_type = 0
+                    OR NOT EXISTS (
+                        SELECT 1 FROM songs AS dup_local
+                        WHERE dup_local.source_type = 0
+                        AND dup_local.title = songs.title
+                        AND (dup_local.duration <= 0 OR songs.duration <= 0
+                            OR ABS(dup_local.duration - songs.duration) <= 3000)
+                        AND (dup_local.artist_name = songs.artist_name COLLATE NOCASE
+                            OR dup_local.album_name = songs.album_name COLLATE NOCASE)
+                    )
+                )
             )
         )
         GROUP BY
@@ -1339,6 +1504,21 @@ interface MusicDao {
             OR (
                 :filterMode = 3
                 AND (songs.file_path IS NOT NULL AND songs.file_path != '')
+            )
+            OR (
+                :filterMode = 4
+                AND (
+                    songs.source_type = 0
+                    OR NOT EXISTS (
+                        SELECT 1 FROM songs AS dup_local
+                        WHERE dup_local.source_type = 0
+                        AND dup_local.title = songs.title
+                        AND (dup_local.duration <= 0 OR songs.duration <= 0
+                            OR ABS(dup_local.duration - songs.duration) <= 3000)
+                        AND (dup_local.artist_name = songs.artist_name COLLATE NOCASE
+                            OR dup_local.album_name = songs.album_name COLLATE NOCASE)
+                    )
+                )
             )
         )
         GROUP BY
@@ -1587,6 +1767,21 @@ interface MusicDao {
                        :filterMode = 3
                        AND (songs.file_path IS NOT NULL AND songs.file_path != '')
                    )
+                   OR (
+                       :filterMode = 4
+                       AND (
+                           songs.source_type = 0
+                           OR NOT EXISTS (
+                               SELECT 1 FROM songs AS dup_local
+                               WHERE dup_local.source_type = 0
+                               AND dup_local.title = songs.title
+                               AND (dup_local.duration <= 0 OR songs.duration <= 0
+                                   OR ABS(dup_local.duration - songs.duration) <= 3000)
+                               AND (dup_local.artist_name = songs.artist_name COLLATE NOCASE
+                                   OR dup_local.album_name = songs.album_name COLLATE NOCASE)
+                           )
+                       )
+                   )
                )
            )
         GROUP BY artists.id
@@ -1675,6 +1870,21 @@ interface MusicDao {
                    OR (
                        :filterMode = 3
                        AND (songs.file_path IS NOT NULL AND songs.file_path != '')
+                   )
+                   OR (
+                       :filterMode = 4
+                       AND (
+                           songs.source_type = 0
+                           OR NOT EXISTS (
+                               SELECT 1 FROM songs AS dup_local
+                               WHERE dup_local.source_type = 0
+                               AND dup_local.title = songs.title
+                               AND (dup_local.duration <= 0 OR songs.duration <= 0
+                                   OR ABS(dup_local.duration - songs.duration) <= 3000)
+                               AND (dup_local.artist_name = songs.artist_name COLLATE NOCASE
+                                   OR dup_local.album_name = songs.album_name COLLATE NOCASE)
+                           )
+                       )
                    )
                )
            )
@@ -2118,6 +2328,21 @@ interface MusicDao {
             OR (
                 :filterMode = 3
                 AND (songs.file_path IS NOT NULL AND songs.file_path != '')
+            )
+            OR (
+                :filterMode = 4
+                AND (
+                    songs.source_type = 0
+                    OR NOT EXISTS (
+                        SELECT 1 FROM songs AS dup_local
+                        WHERE dup_local.source_type = 0
+                        AND dup_local.title = songs.title
+                        AND (dup_local.duration <= 0 OR songs.duration <= 0
+                            OR ABS(dup_local.duration - songs.duration) <= 3000)
+                        AND (dup_local.artist_name = songs.artist_name COLLATE NOCASE
+                            OR dup_local.album_name = songs.album_name COLLATE NOCASE)
+                    )
+                )
             )
         )
         GROUP BY artists.id

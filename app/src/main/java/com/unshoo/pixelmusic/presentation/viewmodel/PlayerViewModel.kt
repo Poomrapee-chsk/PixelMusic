@@ -816,6 +816,16 @@ class PlayerViewModel @Inject constructor(
     private var directPlaybackToken: Long = 0L
     private var pendingQueueSegmentsJob: Job? = null
 
+    /** Logic must match effectiveStorageFilter in LibraryStateHolder. */
+    private fun effectiveLibraryStorageFilter(): com.unshoo.pixelmusic.data.model.StorageFilter {
+        val state = playerUiState.value
+        return com.unshoo.pixelmusic.data.model.StorageFilter.resolve(
+            filter = state.currentStorageFilter,
+            hideLocalMedia = state.hideLocalMedia,
+            hideCloudDuplicates = state.hideCloudDuplicates
+        )
+    }
+
     fun requestLocateCurrentSong() {
         val currentSong = stablePlayerState.value.currentSong ?: return
 
@@ -823,14 +833,7 @@ class PlayerViewModel @Inject constructor(
             try {
                 val sortOption = playerUiState.value.currentSongSortOption
                 
-                // Logic must match effectiveStorageFilter in LibraryStateHolder
-                val baseFilter = playerUiState.value.currentStorageFilter
-                val hideLocal = playerUiState.value.hideLocalMedia
-                val storageFilter = if (hideLocal) {
-                    com.unshoo.pixelmusic.data.model.StorageFilter.ONLINE
-                } else {
-                    baseFilter
-                }
+                val storageFilter = effectiveLibraryStorageFilter()
 
                 val sortedIds = musicRepository.getSongIdsSorted(sortOption, storageFilter)
 
@@ -865,7 +868,7 @@ class PlayerViewModel @Inject constructor(
             failureMessage = "Failed to build full library queue for songId=%s"
         ) {
             val sortOption = playerUiState.value.currentSongSortOption
-            val storageFilter = playerUiState.value.currentStorageFilter
+            val storageFilter = effectiveLibraryStorageFilter()
             musicRepository.getSongIdsSorted(sortOption, storageFilter)
         }
     }
@@ -882,14 +885,14 @@ class PlayerViewModel @Inject constructor(
             failureMessage = "Failed to build favorites queue for songId=%s"
         ) {
             val sortOption = playerUiState.value.currentFavoriteSortOption
-            val storageFilter = playerUiState.value.currentStorageFilter
+            val storageFilter = effectiveLibraryStorageFilter()
             musicRepository.getFavoriteSongIdsSorted(sortOption, storageFilter)
         }
     }
 
     suspend fun getSongsForCurrentLibrarySelection(): List<Song> {
         val sortOption = playerUiState.value.currentSongSortOption
-        val storageFilter = playerUiState.value.currentStorageFilter
+        val storageFilter = effectiveLibraryStorageFilter()
         val sortedIds = musicRepository.getSongIdsSorted(sortOption, storageFilter)
         return resolvePlaybackQueueFromSortedIds(sortedIds)
     }
@@ -1698,7 +1701,7 @@ class PlayerViewModel @Inject constructor(
 
         // Load favorite songs from DB on-demand instead of holding them in memory
         viewModelScope.launch {
-            val favSongs = musicRepository.getFavoriteSongsOnce(playerUiState.value.currentStorageFilter)
+            val favSongs = musicRepository.getFavoriteSongsOnce(effectiveLibraryStorageFilter())
             if (favSongs.isNotEmpty()) {
                 playSongsShuffled(favSongs, "Liked Songs (Shuffled)", startAtZero = true)
             }
@@ -2153,6 +2156,11 @@ class PlayerViewModel @Inject constructor(
                 _playerUiState.update { it.copy(hideLocalMedia = hide) }
             }
         }
+        viewModelScope.launch {
+            userPreferencesRepository.hideCloudDuplicatesFlow.collect { hide ->
+                _playerUiState.update { it.copy(hideCloudDuplicates = hide) }
+            }
+        }
 
 
         castTransferStateHolder.initialize(
@@ -2332,6 +2340,12 @@ class PlayerViewModel @Inject constructor(
         _playlistPickerStorageFilter.value = filter
     }
 
+    fun setHideCloudDuplicates(hide: Boolean) {
+        viewModelScope.launch {
+            userPreferencesRepository.setHideCloudDuplicates(hide)
+        }
+    }
+
     fun setHideLocalMedia(hide: Boolean) {
         viewModelScope.launch {
             userPreferencesRepository.setHideLocalMedia(hide)
@@ -2341,7 +2355,7 @@ class PlayerViewModel @Inject constructor(
     fun toggleStorageFilter() {
         val current = _playerUiState.value.currentStorageFilter
         val next = when (current) {
-            com.unshoo.pixelmusic.data.model.StorageFilter.ALL -> com.unshoo.pixelmusic.data.model.StorageFilter.ONLINE
+            com.unshoo.pixelmusic.data.model.StorageFilter.ALL, com.unshoo.pixelmusic.data.model.StorageFilter.ALL_DEDUPLICATED -> com.unshoo.pixelmusic.data.model.StorageFilter.ONLINE
             com.unshoo.pixelmusic.data.model.StorageFilter.ONLINE -> com.unshoo.pixelmusic.data.model.StorageFilter.OFFLINE
             com.unshoo.pixelmusic.data.model.StorageFilter.OFFLINE -> com.unshoo.pixelmusic.data.model.StorageFilter.DOWNLOADED_ONLY
             com.unshoo.pixelmusic.data.model.StorageFilter.DOWNLOADED_ONLY -> com.unshoo.pixelmusic.data.model.StorageFilter.ALL

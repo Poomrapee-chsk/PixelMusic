@@ -182,6 +182,7 @@ constructor(
         val IS_FOLDERS_PLAYLIST_VIEW = booleanPreferencesKey("is_folders_playlist_view")
         val SHOW_TELEGRAM_CLOUD_PLAYLISTS = booleanPreferencesKey("show_telegram_cloud_playlists")
         val HIDE_LOCAL_MEDIA = booleanPreferencesKey("hide_local_media")
+        val HIDE_CLOUD_DUPLICATES = booleanPreferencesKey("hide_cloud_duplicates")
         val TELEGRAM_TOPIC_DISPLAY_MODE = stringPreferencesKey("telegram_topic_display_mode")
         val FOLDERS_SOURCE = stringPreferencesKey("folders_source")
         val FOLDER_BACK_GESTURE_NAVIGATION = booleanPreferencesKey("folder_back_gesture_navigation")
@@ -1730,6 +1731,15 @@ constructor(
             preferences[PreferencesKeys.HIDE_LOCAL_MEDIA] ?: false
         }.distinctUntilChanged()
 
+    /**
+     * When enabled, the "All" storage filter hides streaming songs (e.g. Navidrome) that also
+     * exist in the local library, so a locally-copied album doesn't appear twice.
+     */
+    val hideCloudDuplicatesFlow: Flow<Boolean> = dataStore.data
+        .map { preferences ->
+            preferences[PreferencesKeys.HIDE_CLOUD_DUPLICATES] ?: true
+        }.distinctUntilChanged()
+
     val telegramTopicDisplayModeFlow: Flow<TelegramTopicDisplayMode> = dataStore.data
         .map { preferences ->
             TelegramTopicDisplayMode.fromStorageKey(preferences[PreferencesKeys.TELEGRAM_TOPIC_DISPLAY_MODE])
@@ -1771,6 +1781,12 @@ constructor(
     suspend fun setHideLocalMedia(hide: Boolean) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.HIDE_LOCAL_MEDIA] = hide
+        }
+    }
+
+    suspend fun setHideCloudDuplicates(hide: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.HIDE_CLOUD_DUPLICATES] = hide
         }
     }
 

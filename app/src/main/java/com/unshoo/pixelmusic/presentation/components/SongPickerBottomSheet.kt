@@ -716,13 +716,13 @@ fun SongPickerEmptyState(
 ) {
     val spec = when (tabId) {
         LibraryTabId.LIKED -> when (storageFilter) {
-            StorageFilter.ALL -> Triple(R.drawable.round_favorite_24, R.string.lib_empty_liked_all_title, R.string.lib_empty_liked_all_subtitle)
+            StorageFilter.ALL, StorageFilter.ALL_DEDUPLICATED -> Triple(R.drawable.round_favorite_24, R.string.lib_empty_liked_all_title, R.string.lib_empty_liked_all_subtitle)
             StorageFilter.OFFLINE -> Triple(R.drawable.round_favorite_24, R.string.lib_empty_liked_offline_title, R.string.lib_empty_liked_offline_subtitle)
             StorageFilter.ONLINE -> Triple(R.drawable.round_favorite_24, R.string.lib_empty_liked_online_title, R.string.lib_empty_liked_online_subtitle)
             StorageFilter.DOWNLOADED_ONLY -> Triple(R.drawable.round_favorite_24, R.string.lib_empty_liked_offline_title, R.string.lib_empty_liked_offline_subtitle)
         }
         else -> when (storageFilter) {
-            StorageFilter.ALL -> Triple(R.drawable.rounded_music_off_24, R.string.lib_empty_songs_all_title, R.string.lib_empty_songs_all_subtitle)
+            StorageFilter.ALL, StorageFilter.ALL_DEDUPLICATED -> Triple(R.drawable.rounded_music_off_24, R.string.lib_empty_songs_all_title, R.string.lib_empty_songs_all_subtitle)
             StorageFilter.OFFLINE -> Triple(R.drawable.rounded_music_off_24, R.string.lib_empty_songs_offline_title, R.string.lib_empty_songs_offline_subtitle)
             StorageFilter.ONLINE -> Triple(R.drawable.rounded_music_off_24, R.string.lib_empty_songs_online_title, R.string.lib_empty_songs_online_subtitle)
             StorageFilter.DOWNLOADED_ONLY -> Triple(R.drawable.rounded_music_off_24, R.string.lib_empty_songs_offline_title, R.string.lib_empty_songs_offline_subtitle)
